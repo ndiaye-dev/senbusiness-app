@@ -1,0 +1,133 @@
+﻿<div class="layout-shell">
+ <button class="mobile-overlay" type="button" *ngIf="isSidebarOpen()" (click)="closeSidebar()"></button>
+
+ <aside class="sidebar" [class.sidebar--open]="isSidebarOpen()">
+  <div class="sidebar__top">
+   <div class="brand">
+    <div class="brand__icon">SB</div>
+    <div>
+     <h1>SenBusiness</h1>
+     <p>Gestion commerciale</p>
+    </div>
+   </div>
+
+   <button class="icon-button icon-button--ghost" type="button" (click)="closeSidebar()" aria-label="Fermer le menu">
+    <span class="material-symbols-outlined">menu_open</span>
+   </button>
+  </div>
+
+  <div class="sidebar__divider"></div>
+
+  <nav class="nav-sections">
+   <section class="nav-section" *ngFor="let section of navSections()">
+    <p class="nav-section__title">{{ section.label }}</p>
+    <a
+     *ngFor="let item of section.items"
+     [routerLink]="item.route"
+     routerLinkActive="nav-link--active"
+     [routerLinkActiveOptions]="{ exact: true }"
+     class="nav-link"
+     (click)="closeSidebar()"
+    >
+     <span class="nav-link__icon material-symbols-outlined">{{ item.icon }}</span>
+     <span class="nav-link__text">{{ item.label }}</span>
+     <span class="nav-link__badge" *ngIf="badgeFor(item.route) as badge">{{ badge }}</span>
+    </a>
+   </section>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="currentUser() as user">
+   <div class="user-chip user-chip--sidebar">
+    <span class="avatar">{{ userInitials() }}</span>
+    <div>
+     <p>{{ user.nom_complet }}</p>
+     <small>{{ userRoleLabel() }}</small>
+    </div>
+   </div>
+   <button type="button" class="logout-button" (click)="logout()">
+    <span class="material-symbols-outlined">logout</span>
+    Déconnexion
+   </button>
+  </div>
+ </aside>
+
+ <div class="content-area">
+  <header class="topbar">
+   <div class="topbar__left">
+    <button type="button" class="icon-button icon-button--menu" (click)="toggleSidebar()" aria-label="Ouvrir le menu">
+     <span class="material-symbols-outlined">menu</span>
+    </button>
+    <h2>{{ activePageTitle() }}</h2>
+   </div>
+
+   <div class="search-wrapper">
+    <span class="material-symbols-outlined search-icon">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher clients, produits, factures..."
+     [ngModel]="globalQuery()"
+     (ngModelChange)="onSearchChange($event)"
+    />
+
+    <div class="search-results" *ngIf="searchResults().length">
+     <button type="button" *ngFor="let result of searchResults()" (click)="goToResult(result.route)">
+      <strong>{{ result.label }}</strong>
+      <small>{{ result.details }}</small>
+     </button>
+    </div>
+   </div>
+
+   <div class="topbar__right" *ngIf="currentUser() as user">
+    <div class="help-menu">
+     <button class="icon-button" type="button" aria-label="Aide" (click)="openHelp()">
+      <span class="material-symbols-outlined">help</span>
+     </button>
+     <div class="help-popover" *ngIf="isHelpOpen()">
+      <h3>Aide rapide</h3>
+      <p>Accès direct aux sections les plus utilisées.</p>
+      <button type="button" (click)="goToResult('/dashboard')">Ouvrir le dashboard</button>
+      <button type="button" (click)="goToResult('/factures')">Aller aux factures</button>
+      <button type="button" (click)="goToResult('/stock')">Vérifier le stock</button>
+      <small>Comptes démo: admin@senbusiness.sn / admin123</small>
+     </div>
+    </div>
+
+    <button class="icon-button notification" type="button" aria-label="Notifications" (click)="goToNotifications()">
+     <span class="material-symbols-outlined">notifications</span>
+     <span class="dot" *ngIf="notificationCount() > 0"></span>
+    </button>
+
+    <div class="user-menu">
+     <button type="button" class="user-chip user-chip--trigger" (click)="toggleUserMenu()">
+      <span class="avatar">{{ userInitials() }}</span>
+      <div>
+       <p>{{ user.nom_complet }}</p>
+       <small>{{ userRoleLabel() }}</small>
+      </div>
+      <span class="material-symbols-outlined user-chip__chevron">expand_more</span>
+     </button>
+
+     <div class="user-popover" *ngIf="isUserMenuOpen()">
+      <button type="button" (click)="goToProfile()">
+       <span class="material-symbols-outlined">person</span>
+       Mon profil
+      </button>
+      <button type="button" (click)="goToResult('/dashboard')">
+       <span class="material-symbols-outlined">dashboard</span>
+       Tableau de bord
+      </button>
+      <button type="button" (click)="logout()">
+       <span class="material-symbols-outlined">logout</span>
+       Déconnexion
+      </button>
+     </div>
+    </div>
+   </div>
+  </header>
+
+  <main class="content">
+   <router-outlet></router-outlet>
+  </main>
+ </div>
+</div>
+

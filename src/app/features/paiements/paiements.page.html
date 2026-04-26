@@ -1,0 +1,267 @@
+﻿<section class="paiements-page">
+ <header class="paiements-header">
+  <div class="paiements-header__left">
+   <div class="paiements-header__icon">
+    <span class="material-symbols-outlined">payments</span>
+   </div>
+   <div>
+    <h2>Paiements</h2>
+    <p>{{ stats().total }} paiements - {{ stats().montantTotal | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   </div>
+  </div>
+
+  <div class="paiements-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportPaiements()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouveau paiement
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">payments</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total paiements</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">paid</span></div>
+   <div>
+    <h3>{{ stats().especes }}</h3>
+    <p>Espèces</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--orange">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">receipt</span></div>
+   <div>
+    <h3>{{ stats().cheques }}</h3>
+    <p>Chèques</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">currency_exchange</span></div>
+   <div>
+    <h3>{{ stats().virements }}</h3>
+    <p>Virements</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--cyan">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">smartphone</span></div>
+   <div>
+    <h3>{{ stats().mobileMoney }}</h3>
+    <p>Mobile Money</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--purple">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">credit_card</span></div>
+   <div>
+    <h3>{{ stats().cartes }}</h3>
+    <p>Cartes</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher un paiement ou client..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="modeFilter()" (change)="onModeFilter($any($event.target).value)">
+    <option value="tous">Tous les modes</option>
+    <option value="virement">Virement</option>
+    <option value="especes">Espèces</option>
+    <option value="cheque">Chèque</option>
+    <option value="mobile_money">Mobile Money</option>
+    <option value="carte_bancaire">Carte bancaire</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="valide">Valide</option>
+    <option value="en_attente">En attente</option>
+    <option value="annule">Annulé</option>
+   </select>
+
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des paiements...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Date</th>
+       <th>Facture</th>
+       <th>Client</th>
+       <th class="text-right">Montant</th>
+       <th>Mode</th>
+       <th>Référence</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>{{ row.date_paiement | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td><span class="numero-chip">{{ row.numero_facture }}</span></td>
+       <td class="client-name">{{ row.client_nom }}</td>
+       <td class="text-right montant">{{ row.montant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td>
+        <span [class]="'mode-pill mode-pill--' + modeTone(row.mode_paiement)">
+         <span class="material-symbols-outlined">{{ modeIcon(row.mode_paiement) }}</span>
+         {{ modeLabel(row.mode_paiement) }}
+        </span>
+       </td>
+       <td><span class="ref-chip">{{ row.reference_paiement }}</span></td>
+       <td class="text-center">
+        <div class="row-actions">
+         <button type="button" *ngIf="canView()" aria-label="Voir paiement" (click)="viewById(row.id)">
+          <span class="material-symbols-outlined">visibility</span>
+         </button>
+
+         <button
+          type="button"
+          class="danger"
+          *ngIf="canDelete()"
+          aria-label="Supprimer paiement"
+          (click)="removeById(row.id)"
+         >
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucun paiement ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ title="Nouveau paiement"
+ submitLabel="Enregistrer"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid" novalidate>
+  <label>
+   Facture <span class="required">*</span>
+   <select formControlName="facture_id">
+    <option *ngFor="let facture of factures()" [value]="facture.id">
+     {{ facture.numero_facture }} - reste {{ facture.reste_a_payer | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}
+    </option>
+   </select>
+  </label>
+
+  <label>
+   Date de paiement <span class="required">*</span>
+   <input type="date" formControlName="date_paiement" />
+  </label>
+
+  <label>
+   Montant (XOF) <span class="required">*</span>
+   <input type="number" formControlName="montant" />
+  </label>
+
+  <label>
+   Mode de paiement <span class="required">*</span>
+   <select formControlName="mode_paiement">
+    <option value="especes">Espèces</option>
+    <option value="virement">Virement</option>
+    <option value="mobile_money">Mobile money</option>
+    <option value="cheque">Chèque</option>
+    <option value="carte_bancaire">Carte bancaire</option>
+   </select>
+  </label>
+
+  <label>
+   Référence paiement <span class="required">*</span>
+   <input type="text" formControlName="reference_paiement" />
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="valide">Valide</option>
+    <option value="en_attente">En attente</option>
+    <option value="annule">Annulé</option>
+   </select>
+  </label>
+ </form>
+</app-form-modal>
+
+<app-form-modal
+ [open]="isDetailsModalOpen()"
+ [title]="detailsTitle()"
+ submitLabel="Fermer"
+ (close)="closeDetailsModal()"
+ (submit)="closeDetailsModal()"
+>
+ <ul class="details-list">
+  <li *ngFor="let line of detailsLines()">{{ line }}</li>
+ </ul>
+</app-form-modal>

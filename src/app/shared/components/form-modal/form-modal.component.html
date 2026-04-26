@@ -1,0 +1,20 @@
+﻿<div class="overlay" *ngIf="open" (click)="close.emit()">
+ <section class="modal" (click)="$event.stopPropagation()">
+  <header>
+   <h2>{{ title }}</h2>
+   <button type="button" aria-label="Fermer" (click)="close.emit()">
+    <span class="material-symbols-outlined">close</span>
+   </button>
+  </header>
+
+  <div class="content">
+   <ng-content />
+  </div>
+
+  <footer>
+   <button type="button" class="secondary" (click)="close.emit()">Annuler</button>
+   <button type="button" [disabled]="loading" (click)="submit.emit()">{{ loading ? 'Traitement...' : submitLabel }}</button>
+  </footer>
+ </section>
+</div>
+

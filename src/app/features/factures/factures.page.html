@@ -1,0 +1,339 @@
+﻿<section class="factures-page">
+ <header class="factures-header">
+  <div class="factures-header__left">
+   <div class="factures-header__icon">
+    <span class="material-symbols-outlined">receipt_long</span>
+   </div>
+   <div>
+    <h2>Factures</h2>
+    <p>{{ stats().total }} factures - Impayé : {{ formatXof(stats().montantImpayee) }}</p>
+   </div>
+  </div>
+
+  <div class="factures-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportFactures()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouvelle facture
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">receipt</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total factures</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">task_alt</span></div>
+   <div>
+    <h3>{{ stats().payees }}</h3>
+    <p>Payées</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--red">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">cancel</span></div>
+   <div>
+    <h3>{{ stats().impayees }}</h3>
+    <p>Impayées</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--slate">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">block</span></div>
+   <div>
+    <h3>{{ stats().annulees }}</h3>
+    <p>Annulées</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--orange">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">payments</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().montantImpayee) }}</h3>
+    <p>Montant impayé</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher une facture ou client..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="payee">Payée</option>
+    <option value="impayee">Impayée</option>
+    <option value="en_attente">En attente</option>
+    <option value="annulee">Annulée</option>
+    <option value="brouillon">Brouillon</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <select [value]="modeFilter()" (change)="onModeFilter($any($event.target).value)">
+    <option value="tous">Tous les modes</option>
+    <option value="virement">Virement</option>
+    <option value="especes">Espèces</option>
+    <option value="mobile_money">Mobile money</option>
+    <option value="cheque">Chèque</option>
+   </select>
+
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des factures...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Numéro</th>
+       <th>Client</th>
+       <th>Date</th>
+       <th>Échéance</th>
+       <th class="text-right">Montant</th>
+       <th>Statut</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>
+        <span class="numero-chip">{{ row.numero_facture }}</span>
+       </td>
+       <td class="client-name">{{ row.client_nom }}</td>
+       <td>{{ row.date_facture | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td>{{ row.date_echeance | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td class="text-right montant">{{ row.montant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td>
+        <span [class]="'status-pill status-pill--' + statusTone(row.ui_status)">
+         <span class="dot"></span>
+         {{ statusLabel(row.ui_status) }}
+        </span>
+       </td>
+       <td class="text-center">
+        <div class="row-actions">
+         <button
+          type="button"
+          *ngIf="canView() && displayFactureById(row.id) as source"
+          aria-label="Voir facture"
+          (click)="view(source)"
+         >
+          <span class="material-symbols-outlined">visibility</span>
+         </button>
+
+         <button
+          type="button"
+          *ngIf="canEdit() && displayFactureById(row.id) as source"
+          aria-label="Modifier facture"
+          (click)="openEditModal(source)"
+         >
+          <span class="material-symbols-outlined">edit</span>
+         </button>
+
+         <button
+          type="button"
+          *ngIf="canView() && displayFactureById(row.id) as source"
+          aria-label="Télécharger facture"
+          (click)="download(source)"
+         >
+          <span class="material-symbols-outlined">download</span>
+         </button>
+
+         <button
+          type="button"
+          class="danger"
+          *ngIf="canDelete() && displayFactureById(row.id) as source"
+          aria-label="Supprimer facture"
+          (click)="remove(source)"
+         >
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucune facture ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ [title]="editingId() ? 'Modifier facture' : 'Nouvelle facture'"
+ [submitLabel]="editingId() ? 'Mettre à jour' : 'Créer'"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid two-columns" novalidate>
+  <label>
+   Client <span class="required">*</span>
+   <select formControlName="client_id">
+    <option *ngFor="let client of clients()" [value]="client.id">{{ clientLabel(client) }}</option>
+   </select>
+  </label>
+
+  <label>
+   Devis associé
+   <div class="inline-field">
+    <select formControlName="devis_id">
+     <option [value]="0">Aucun</option>
+     <option *ngFor="let item of devis()" [value]="item.id">{{ item.numero_devis }}</option>
+    </select>
+    <button type="button" (click)="loadLinesFromDevis()">Charger lignes</button>
+   </div>
+  </label>
+
+  <label>
+   Numéro facture <span class="required">*</span>
+   <input type="text" formControlName="numero_facture" />
+  </label>
+
+  <label>
+   Date facture <span class="required">*</span>
+   <input type="date" formControlName="date_facture" />
+  </label>
+
+  <label>
+   Date échéance <span class="required">*</span>
+   <input type="date" formControlName="date_echeance" />
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="brouillon">Brouillon</option>
+    <option value="emise">Émise</option>
+    <option value="partiellement_payee">Partiellement payée</option>
+    <option value="payee">Payée</option>
+    <option value="annulee">Annulée</option>
+   </select>
+  </label>
+
+  <label>
+   Mode de paiement <span class="required">*</span>
+   <select formControlName="mode_paiement">
+    <option value="virement">Virement</option>
+    <option value="especes">Espèces</option>
+    <option value="mobile_money">Mobile money</option>
+    <option value="cheque">Chèque</option>
+   </select>
+  </label>
+
+  <div class="lines full">
+   <div class="lines-header">
+    <h3>Lignes facture</h3>
+    <button type="button" (click)="addLine()">Ajouter ligne</button>
+   </div>
+
+   <div class="line-grid" *ngFor="let line of linesFormArray.controls; let i = index" [formGroup]="$any(line)">
+    <label>
+     Produit <span class="required">*</span>
+     <select formControlName="produit_id" (change)="onProductChange(i)">
+      <option *ngFor="let produit of produits()" [value]="produit.id">{{ produit.nom }}</option>
+     </select>
+    </label>
+
+    <label>
+     Quantité <span class="required">*</span>
+     <input type="number" formControlName="quantite" />
+    </label>
+
+    <label>
+     Prix unitaire <span class="required">*</span>
+     <input type="number" formControlName="prix_unitaire" />
+    </label>
+
+    <label>
+     Remise ligne (%) <span class="required">*</span>
+     <input type="number" formControlName="remise_ligne" />
+    </label>
+
+    <label>
+     TVA (%) <span class="required">*</span>
+     <input type="number" formControlName="tva_pourcentage" />
+    </label>
+
+    <button type="button" class="danger" (click)="removeLine(i)">Retirer</button>
+   </div>
+  </div>
+
+  <div class="totals full">
+   <p>Total HT: {{ totals().ht | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <p>Total TVA: {{ totals().tva | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <strong>Total TTC: {{ totals().ttc | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</strong>
+  </div>
+ </form>
+</app-form-modal>
+
+<app-form-modal
+ [open]="isDetailsModalOpen()"
+ [title]="detailsTitle()"
+ submitLabel="Fermer"
+ (close)="closeDetailsModal()"
+ (submit)="closeDetailsModal()"
+>
+ <ul class="details-list">
+  <li *ngFor="let line of detailsLines()">{{ line }}</li>
+ </ul>
+</app-form-modal>

@@ -1,59 +1,131 @@
-# GestionCommercialeFrontend
+﻿# SenBusiness Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
+Application Angular de gestion commerciale pour PME/TPE au Senegal.
+Langue UI: francais. Devise principale: XOF.
 
-## Development server
+## Stack
 
-To start a local development server, run:
+- Angular 21+ (standalone components)
+- TypeScript strict
+- Routing lazy loading
+- Donnees mock locales via localStorage
+- Architecture: core / shared / features
+
+## Installation
+
+```bash
+npm install
+```
+
+## Lancement local
+
+```bash
+npm start
+```
+
+Alternative:
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+URL locale par defaut: `http://localhost:4200`
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Build
 
 ```bash
-ng generate component component-name
+npm run build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Sortie:
+
+```text
+dist/gestion-commerciale-frontend
+```
+
+## Comptes de demo
+
+- `admin@senbusiness.sn / admin123` (administrateur)
+- `manager@senbusiness.sn / manager123` (gestionnaire_commercial)
+- `caissier@senbusiness.sn / caissier123` (caissier)
+- `magasin@senbusiness.sn / magasin123` (magasinier)
+
+## Roles et permissions
+
+- `administrateur`: acces total
+- `gestionnaire_commercial`: dashboard, clients, produits, devis, factures, paiements, depenses
+- `caissier`: factures, paiements, lecture clients/produits
+- `magasinier`: fournisseurs, categories, produits, stock, achats
+
+## Fonctionnalites V1
+
+- Auth mock locale (login/logout) + roles
+- Guards: auth guard + role guard
+- Layout principal responsive (sidebar + header + recherche globale)
+- Pages: Login, Dashboard, Clients, Fournisseurs, Categories, Produits, Stock, Devis, Factures, Paiements, Achats, Depenses, Utilisateurs, Profil
+- CRUD UI complet sur les entites metier
+- Recherche + filtres + pagination
+- Validation des formulaires
+- Calculs automatiques HT/TVA/TTC/remises
+- Conversion Devis -> Facture
+- Paiements qui mettent a jour reste_a_payer / statut facture
+- Mouvements de stock qui mettent a jour stock_actuel
+- Etats de chargement et erreurs UI
+- Seed local realist Senegal (noms, villes, telephones, NINEA)
+
+## Structure du projet
+
+```text
+src/app/
+  core/
+    constants/
+    guards/
+    layout/
+    models/
+    services/
+  shared/
+    components/
+      data-table/
+      form-modal/
+      kpi-card/
+      pagination/
+      status-badge/
+    utils/
+  features/
+    auth/
+    dashboard/
+    profil/
+    clients/
+    fournisseurs/
+    categories/
+    produits/
+    stock/
+    devis/
+    factures/
+    paiements/
+    achats/
+    depenses/
+    utilisateurs/
+```
+
+## Deploiement Vercel (SPA Angular)
+
+1. Verifier le build local:
 
 ```bash
-ng generate --help
+npm run build
 ```
 
-## Building
+2. Pousser le projet sur GitHub/GitLab.
+3. Importer le repository dans Vercel.
+4. Parametres build:
+   - Build Command: `npm run build`
+   - Output Directory: `dist/gestion-commerciale-frontend/browser`
+5. Le fichier `vercel.json` force la rewrite SPA vers `index.html`.
+6. Lancer le deploiement.
 
-To build the project run:
+## Notes techniques
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Base locale: `senbusiness_db_v1`
+- Reinitialisation des donnees de demo depuis la page Login
+- Aucun backend reel requis pour cette V1

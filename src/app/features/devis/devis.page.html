@@ -1,0 +1,324 @@
+﻿<section class="devis-page">
+ <header class="devis-header">
+  <div class="devis-header__left">
+   <div class="devis-header__icon">
+    <span class="material-symbols-outlined">description</span>
+   </div>
+   <div>
+    <h2>Devis</h2>
+    <p>{{ stats().total }} devis - Montant total : {{ stats().montantTotal | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   </div>
+  </div>
+
+  <div class="devis-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportDevis()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouveau devis
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">description</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total devis</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--slate">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">draft</span></div>
+   <div>
+    <h3>{{ stats().brouillons }}</h3>
+    <p>Brouillons</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">send</span></div>
+   <div>
+    <h3>{{ stats().envoyes }}</h3>
+    <p>Envoyés</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">task_alt</span></div>
+   <div>
+    <h3>{{ stats().acceptes }}</h3>
+    <p>Acceptés</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--red">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">cancel</span></div>
+   <div>
+    <h3>{{ stats().refuses }}</h3>
+    <p>Refusés</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher un devis ou client..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="brouillon">Brouillon</option>
+    <option value="envoye">Envoyé</option>
+    <option value="accepte">Accepté</option>
+    <option value="refuse">Refusé</option>
+    <option value="expire">Expire</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser les filtres</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des devis...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Numéro</th>
+       <th>Client</th>
+       <th>Date</th>
+       <th>Échéance</th>
+       <th class="text-right">Montant</th>
+       <th>Statut</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>
+        <span class="numero-chip">{{ row.numero_devis }}</span>
+       </td>
+       <td class="client-name">{{ row.client_nom }}</td>
+       <td>{{ row.date_devis | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td>{{ row.date_expiration | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td class="text-right montant">{{ row.montant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td>
+        <span [class]="'status-pill status-pill--' + statusTone(row.statut)">
+         <span class="dot"></span>
+         {{ statusLabel(row.statut) }}
+        </span>
+       </td>
+       <td class="text-center">
+        <div class="row-actions">
+         <button
+          type="button"
+          *ngIf="canView() && displayDevisById(row.id) as source"
+          aria-label="Voir devis"
+          (click)="view(source)"
+         >
+          <span class="material-symbols-outlined">visibility</span>
+         </button>
+
+         <button
+          type="button"
+          *ngIf="canEdit() && displayDevisById(row.id) as source"
+          aria-label="Modifier devis"
+          (click)="openEditModal(source)"
+         >
+          <span class="material-symbols-outlined">edit</span>
+         </button>
+
+         <button
+          type="button"
+          *ngIf="canCreate() && displayDevisById(row.id) as source"
+          aria-label="Dupliquer devis"
+          (click)="duplicate(source)"
+         >
+          <span class="material-symbols-outlined">content_copy</span>
+         </button>
+
+         <button
+          type="button"
+          *ngIf="canEdit() && displayDevisById(row.id) as source"
+          aria-label="Convertir en facture"
+          (click)="convertToFacture(source)"
+         >
+          <span class="material-symbols-outlined">sync_alt</span>
+         </button>
+
+         <button
+          type="button"
+          class="danger"
+          *ngIf="canDelete() && displayDevisById(row.id) as source"
+          aria-label="Supprimer devis"
+          (click)="remove(source)"
+         >
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucun devis ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ [title]="editingId() ? 'Modifier devis' : 'Nouveau devis'"
+ [submitLabel]="editingId() ? 'Mettre à jour' : 'Créer'"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid two-columns" novalidate>
+  <label>
+   Client <span class="required">*</span>
+   <select formControlName="client_id">
+    <option *ngFor="let client of clients()" [value]="client.id">{{ clientLabel(client) }}</option>
+   </select>
+  </label>
+
+  <label>
+   Numéro devis <span class="required">*</span>
+   <input type="text" formControlName="numero_devis" />
+  </label>
+
+  <label>
+   Date devis <span class="required">*</span>
+   <input type="date" formControlName="date_devis" />
+  </label>
+
+  <label>
+   Date expiration <span class="required">*</span>
+   <input type="date" formControlName="date_expiration" />
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="brouillon">Brouillon</option>
+    <option value="envoye">Envoyé</option>
+    <option value="accepte">Accepté</option>
+    <option value="refuse">Refusé</option>
+    <option value="expire">Expire</option>
+   </select>
+  </label>
+
+  <label>
+   Remise globale (%) <span class="required">*</span>
+   <input type="number" formControlName="remise_globale" />
+  </label>
+
+  <div class="lines full">
+   <div class="lines-header">
+    <h3>Lignes devis</h3>
+    <button type="button" (click)="addLine()">Ajouter ligne</button>
+   </div>
+
+   <div class="line-grid" *ngFor="let line of linesFormArray.controls; let i = index" [formGroup]="$any(line)">
+    <label>
+     Produit <span class="required">*</span>
+     <select formControlName="produit_id" (change)="onProductChange(i)">
+      <option *ngFor="let produit of produits()" [value]="produit.id">{{ produit.nom }}</option>
+     </select>
+    </label>
+
+    <label>
+     Quantité <span class="required">*</span>
+     <input type="number" formControlName="quantite" />
+    </label>
+
+    <label>
+     Prix unitaire <span class="required">*</span>
+     <input type="number" formControlName="prix_unitaire" />
+    </label>
+
+    <label>
+     Remise ligne (%) <span class="required">*</span>
+     <input type="number" formControlName="remise_ligne" />
+    </label>
+
+    <label>
+     TVA (%) <span class="required">*</span>
+     <input type="number" formControlName="tva_pourcentage" />
+    </label>
+
+    <button type="button" class="danger" (click)="removeLine(i)">Retirer</button>
+   </div>
+  </div>
+
+  <div class="totals full">
+   <p>Total HT: {{ totals().ht | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <p>Total TVA: {{ totals().tva | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <strong>Total TTC: {{ totals().ttc | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</strong>
+  </div>
+ </form>
+</app-form-modal>
+
+<app-form-modal
+ [open]="isDetailsModalOpen()"
+ [title]="detailsTitle()"
+ submitLabel="Fermer"
+ (close)="closeDetailsModal()"
+ (submit)="closeDetailsModal()"
+>
+ <ul class="details-list">
+  <li *ngFor="let line of detailsLines()">{{ line }}</li>
+ </ul>
+</app-form-modal>

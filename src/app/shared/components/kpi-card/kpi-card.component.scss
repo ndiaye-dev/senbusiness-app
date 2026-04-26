@@ -1,0 +1,30 @@
+﻿.kpi-card {
+  background: linear-gradient(160deg, rgba(15, 118, 110, 0.12), rgba(15, 118, 110, 0.03));
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
+
+  h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #0f172a;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 1.42rem;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 0.3rem 0 0;
+    color: #334155;
+    font-size: 0.85rem;
+  }
+}
+
+.kpi-card--blue {
+  background: linear-gradient(160deg, rgba(29, 78, 216, 0.12), rgba(29, 78, 216, 0.03));
+  border-color: rgba(29, 78, 216, 0.2);
+}

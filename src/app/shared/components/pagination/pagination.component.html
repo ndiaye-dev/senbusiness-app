@@ -1,0 +1,14 @@
+﻿<div class="pagination" *ngIf="total > pageSize">
+ <button type="button" (click)="goTo(page - 1)">Precedent</button>
+
+ <button
+  type="button"
+  *ngFor="let item of pages"
+  [class.active]="item === page"
+  (click)="goTo(item)"
+ >
+  {{ item }}
+ </button>
+
+ <button type="button" (click)="goTo(page + 1)">Suivant</button>
+</div>

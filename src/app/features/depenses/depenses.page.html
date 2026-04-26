@@ -1,0 +1,296 @@
+﻿<section class="depenses-page">
+ <header class="depenses-header">
+  <div class="depenses-header__left">
+   <div class="depenses-header__icon">
+    <span class="material-symbols-outlined">account_balance_wallet</span>
+   </div>
+   <div>
+    <h2>Dépenses</h2>
+    <p>{{ stats().total }} dépenses - {{ formatXof(totalMontant()) }}</p>
+   </div>
+  </div>
+
+  <div class="depenses-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportDepenses()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouvelle dépense
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--red">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total dépenses</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">business</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().loyer) }}</h3>
+    <p>Loyer</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">groups</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().salaires) }}</h3>
+    <p>Salaires</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--orange">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">build</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().fournitures) }}</h3>
+    <p>Fournitures</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">local_shipping</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().transport) }}</h3>
+    <p>Transport</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--purple">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">wifi</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().services) }}</h3>
+    <p>Services</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher une dépense..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="categoryFilter()" (change)="onCategoryFilter($any($event.target).value)">
+    <option value="toutes">Toutes les catégories</option>
+    <option value="Loyer">Loyer</option>
+    <option value="Salaires">Salaires</option>
+    <option value="Fournitures">Fournitures</option>
+    <option value="Transport">Transport</option>
+    <option value="Services">Services</option>
+    <option value="Autre">Autre</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="validee">Validée</option>
+    <option value="en_attente">En attente</option>
+    <option value="annulee">Annulée</option>
+   </select>
+
+   <select [value]="modeFilter()" (change)="onModeFilter($any($event.target).value)">
+    <option value="tous">Tous les modes</option>
+    <option value="virement">Virement</option>
+    <option value="especes">Espèces</option>
+    <option value="cheque">Chèque</option>
+    <option value="mobile_money">Mobile Money</option>
+    <option value="carte_bancaire">Carte bancaire</option>
+   </select>
+
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des dépenses...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Date</th>
+       <th>Catégorie</th>
+       <th>Description</th>
+       <th class="text-right">Montant</th>
+       <th>Mode</th>
+       <th class="text-center">Pièce</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>{{ row.date_depense | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td>
+        <span [class]="'category-pill category-pill--' + categoryTone(row.categorie_label)">
+         <span class="material-symbols-outlined">{{ categoryIcon(row.categorie_label) }}</span>
+         {{ row.categorie_label }}
+        </span>
+       </td>
+       <td class="description">{{ row.libelle }}</td>
+       <td class="text-right montant">{{ row.montant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td>
+        <span [class]="'mode-inline mode-inline--' + row.mode_tone">
+         <span class="material-symbols-outlined">{{ row.mode_icon }}</span>
+         {{ row.mode_label }}
+        </span>
+       </td>
+       <td class="text-center">
+        <span *ngIf="row.has_piece" class="piece-chip">
+         <span class="material-symbols-outlined">attach_file</span>
+        </span>
+        <span *ngIf="!row.has_piece" class="piece-empty">-</span>
+       </td>
+       <td class="text-center">
+        <div class="row-actions">
+         <button type="button" *ngIf="canView()" aria-label="Voir dépense" (click)="viewById(row.id)">
+          <span class="material-symbols-outlined">visibility</span>
+         </button>
+
+         <button
+          type="button"
+          class="danger"
+          *ngIf="canDelete()"
+          aria-label="Supprimer dépense"
+          (click)="removeById(row.id)"
+         >
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucune dépense ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ [title]="editingId() ? 'Modifier dépense' : 'Nouvelle dépense'"
+ [submitLabel]="editingId() ? 'Mettre à jour' : 'Créer'"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid" novalidate>
+  <label>
+   Libellé <span class="required">*</span>
+   <input type="text" formControlName="libelle" />
+  </label>
+
+  <label>
+   Catégorie dépense <span class="required">*</span>
+   <select formControlName="categorie_depense">
+    <option value="Loyer">Loyer</option>
+    <option value="Salaires">Salaires</option>
+    <option value="Fournitures">Fournitures</option>
+    <option value="Transport">Transport</option>
+    <option value="Services">Services</option>
+    <option value="Autre">Autre</option>
+   </select>
+  </label>
+
+  <label>
+   Montant (XOF) <span class="required">*</span>
+   <input type="number" formControlName="montant" />
+  </label>
+
+  <label>
+   Date dépense <span class="required">*</span>
+   <input type="date" formControlName="date_depense" />
+  </label>
+
+  <label>
+   Mode de paiement <span class="required">*</span>
+   <select formControlName="mode_paiement">
+    <option value="especes">Espèces</option>
+    <option value="virement">Virement</option>
+    <option value="mobile_money">Mobile Money</option>
+    <option value="cheque">Chèque</option>
+    <option value="carte_bancaire">Carte bancaire</option>
+   </select>
+  </label>
+
+  <label>
+   Justificatif
+   <textarea rows="2" formControlName="justificatif"></textarea>
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="validee">Validée</option>
+    <option value="en_attente">En attente</option>
+    <option value="annulee">Annulée</option>
+   </select>
+  </label>
+ </form>
+</app-form-modal>
+
+<app-form-modal
+ [open]="isDetailsModalOpen()"
+ [title]="detailsTitle()"
+ submitLabel="Fermer"
+ (close)="closeDetailsModal()"
+ (submit)="closeDetailsModal()"
+>
+ <ul class="details-list">
+  <li *ngFor="let line of detailsLines()">{{ line }}</li>
+ </ul>
+</app-form-modal>
+

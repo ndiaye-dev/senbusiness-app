@@ -1,0 +1,293 @@
+﻿<section class="produits-page">
+ <header class="produits-header">
+  <div class="produits-header__left">
+   <div class="produits-header__icon">
+    <span class="material-symbols-outlined">deployed_code</span>
+   </div>
+   <div>
+    <h2>Produits</h2>
+    <p>{{ stats().total }} produits - Valeur stock : {{ formatXof(stats().valeurStock) }}</p>
+   </div>
+  </div>
+
+  <div class="produits-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportProduits()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouveau produit
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">deployed_code</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total produits</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">task_alt</span></div>
+   <div>
+    <h3>{{ stats().actifs }}</h3>
+    <p>Produits actifs</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--orange">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">warning</span></div>
+   <div>
+    <h3>{{ stats().stockFaible }}</h3>
+    <p>Stock faible</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--red">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">cancel</span></div>
+   <div>
+    <h3>{{ stats().rupture }}</h3>
+    <p>Rupture</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">monetization_on</span></div>
+   <div>
+    <h3 class="kpi-money">{{ formatXof(stats().valeurStock) }}</h3>
+    <p>Valeur stock</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher un produit ou référence..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="categoryFilter()" (change)="onCategoryFilter($any($event.target).value)">
+    <option value="toutes">Toutes les catégories</option>
+    <option *ngFor="let category of categories()" [value]="category.id">{{ category.nom }}</option>
+   </select>
+
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="actif">Actif</option>
+    <option value="inactif">Inactif</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <select [value]="stockFilter()" (change)="onStockFilter($any($event.target).value)">
+    <option value="tous">Tous les stocks</option>
+    <option value="stock_faible">Stock faible</option>
+    <option value="rupture">Rupture</option>
+   </select>
+
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des produits...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Produit</th>
+       <th>Référence</th>
+       <th>Catégorie</th>
+       <th class="text-right">Prix achat</th>
+       <th class="text-right">Prix vente</th>
+       <th class="text-center">Stock</th>
+       <th>Statut</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>
+        <div class="product-cell">
+         <span class="product-icon"><span class="material-symbols-outlined">deployed_code</span></span>
+         <div class="product-meta">
+          <span class="product-name">{{ row.nom }}</span>
+          <span class="product-unit">{{ row.unite }}</span>
+         </div>
+        </div>
+       </td>
+
+       <td><span class="ref-chip">{{ row.reference }}</span></td>
+       <td>{{ row.categorie }}</td>
+       <td class="text-right achat">{{ row.prix_achat | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td class="text-right vente">{{ row.prix_vente | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+
+       <td class="text-center stock-cell">
+        <span [class]="'stock-value stock-value--' + row.stock_tone">{{ row.stock_actuel }}</span>
+        <span [class]="'stock-state stock-state--' + row.stock_tone">{{ stockLabel(row.stock_tone) }}</span>
+       </td>
+
+       <td>
+        <span class="status-pill" [class.status-pill--inactive]="row.statut === 'inactif'">
+         <span class="dot"></span>
+         {{ row.statut === 'actif' ? 'Actif' : 'Inactif' }}
+        </span>
+       </td>
+
+       <td class="text-center">
+        <div class="row-actions">
+         <button type="button" *ngIf="canEdit()" aria-label="Modifier produit" (click)="openEditModalById(row.id)">
+          <span class="material-symbols-outlined">edit</span>
+         </button>
+
+         <button
+          type="button"
+          class="danger"
+          *ngIf="canDelete()"
+          aria-label="Supprimer produit"
+          (click)="removeById(row.id)"
+         >
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucun produit ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ [title]="editingId() ? 'Modifier produit' : 'Nouveau produit'"
+ [submitLabel]="editingId() ? 'Mettre à jour' : 'Créer'"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid two-columns" novalidate>
+  <label>
+   Référence (SKU) <span class="required">*</span>
+   <input type="text" formControlName="sku" />
+  </label>
+
+  <label>
+   Code barre
+   <input type="text" formControlName="code_barre" />
+  </label>
+
+  <label>
+   Nom produit <span class="required">*</span>
+   <input type="text" formControlName="nom" />
+  </label>
+
+  <label>
+   Unité <span class="required">*</span>
+   <input type="text" formControlName="unite" />
+  </label>
+
+  <label class="full">
+   Description
+   <textarea rows="2" formControlName="description"></textarea>
+  </label>
+
+  <label>
+   Catégorie <span class="required">*</span>
+   <select formControlName="categorie_id">
+    <option *ngFor="let item of categories()" [value]="item.id">{{ item.nom }}</option>
+   </select>
+  </label>
+
+  <label>
+   Fournisseur <span class="required">*</span>
+   <select formControlName="fournisseur_id">
+    <option *ngFor="let item of fournisseurs()" [value]="item.id">{{ item.raison_sociale }}</option>
+   </select>
+  </label>
+
+  <label>
+   Prix achat (XOF) <span class="required">*</span>
+   <input type="number" formControlName="prix_achat" />
+  </label>
+
+  <label>
+   Prix vente (XOF) <span class="required">*</span>
+   <input type="number" formControlName="prix_vente" />
+  </label>
+
+  <label>
+   TVA (%) <span class="required">*</span>
+   <input type="number" formControlName="tva_pourcentage" />
+  </label>
+
+  <label>
+   Stock actuel <span class="required">*</span>
+   <input type="number" formControlName="stock_actuel" />
+  </label>
+
+  <label>
+   Stock minimum <span class="required">*</span>
+   <input type="number" formControlName="stock_minimum" />
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="actif">Actif</option>
+    <option value="inactif">Inactif</option>
+   </select>
+  </label>
+ </form>
+</app-form-modal>

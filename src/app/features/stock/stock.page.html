@@ -1,0 +1,222 @@
+﻿<section class="stock-page">
+ <header class="stock-header">
+  <div class="stock-header__left">
+   <div class="stock-header__icon">
+    <span class="material-symbols-outlined">inventory_2</span>
+   </div>
+   <div>
+    <h2>Mouvements de Stock</h2>
+    <p>Suivi des entrées, sorties et ajustements d'inventaire</p>
+   </div>
+  </div>
+
+  <div class="stock-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportMouvements()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouveau mouvement
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">monetization_on</span></div>
+   <div>
+    <h3>{{ stats().valeurStockTotal | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h3>
+    <p>Valeur stock total</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">add_circle</span></div>
+   <div>
+    <h3>{{ stats().entreesMois }}</h3>
+    <p>Entrées période</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--orange">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">remove_circle</span></div>
+   <div>
+    <h3>{{ stats().sortiesMois }}</h3>
+    <p>Sorties période</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">tune</span></div>
+   <div>
+    <h3>{{ stats().ajustements }}</h3>
+    <p>Ajustements</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="movement-tabs">
+  <button type="button" [class.active]="movementFilter() === 'tous'" (click)="selectMovementFilter('tous')">
+   Tous les mouvements <span>{{ tabCounts().tous }}</span>
+  </button>
+  <button type="button" [class.active]="movementFilter() === 'entree'" (click)="selectMovementFilter('entree')">
+   Entrées <span>{{ tabCounts().entree }}</span>
+  </button>
+  <button type="button" [class.active]="movementFilter() === 'sortie'" (click)="selectMovementFilter('sortie')">
+   Sorties <span>{{ tabCounts().sortie }}</span>
+  </button>
+  <button type="button" [class.active]="movementFilter() === 'ajustement'" (click)="selectMovementFilter('ajustement')">
+   Ajustements <span>{{ tabCounts().ajustement }}</span>
+  </button>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher un produit ou référence..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <label class="period-field">
+    <span class="material-symbols-outlined">calendar_month</span>
+    <select [value]="periodFilter()" (change)="onPeriodFilter($any($event.target).value)">
+     <option value="30j">Période 30 jours</option>
+     <option value="7j">Période 7 jours</option>
+     <option value="tous">Toute la période</option>
+    </select>
+   </label>
+
+   <p class="result-count">{{ filtered().length }} mouvements</p>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des mouvements...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Date / Heure</th>
+       <th>Type</th>
+       <th>Produit</th>
+       <th class="text-center">Quantité</th>
+       <th>Entrepôt</th>
+       <th>Utilisateur</th>
+       <th>Référence</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>{{ row.date_mouvement | date: 'd MMM y, HH:mm' : '' : 'fr' }}</td>
+
+       <td>
+        <span [class]="'type-pill type-pill--' + typeTone(row.type_mouvement)">
+         <span class="material-symbols-outlined">{{ typeIcon(row.type_mouvement) }}</span>
+         {{ typeLabel(row.type_mouvement) }}
+        </span>
+       </td>
+
+       <td class="product-name">{{ row.produit_nom }}</td>
+
+       <td class="text-center">
+        <span [class]="'qty-chip qty-chip--' + quantiteTone(row)">{{ quantiteDisplay(row) }}</span>
+       </td>
+
+       <td>{{ row.entrepot }}</td>
+       <td>{{ row.utilisateur }}</td>
+       <td><span class="ref-chip">{{ row.reference_document }}</span></td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucun mouvement ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ title="Nouveau mouvement"
+ submitLabel="Enregistrer"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid" novalidate>
+  <label>
+   Produit <span class="required">*</span>
+   <select formControlName="produit_id">
+    <option *ngFor="let produit of produits()" [value]="produit.id">
+     {{ produit.nom }} ({{ produit.stock_actuel }} {{ produit.unite }})
+    </option>
+   </select>
+  </label>
+
+  <label>
+   Type de mouvement <span class="required">*</span>
+   <select formControlName="type_mouvement">
+    <option value="entree">Entrée</option>
+    <option value="sortie">Sortie</option>
+    <option value="ajustement">Ajustement</option>
+   </select>
+  </label>
+
+  <label>
+   Quantité <span class="required">*</span>
+   <input type="number" formControlName="quantite" />
+  </label>
+
+  <label>
+   Date du mouvement <span class="required">*</span>
+   <input type="date" formControlName="date_mouvement" />
+  </label>
+
+  <label>
+   Référence document <span class="required">*</span>
+   <input type="text" formControlName="reference_document" />
+  </label>
+
+  <label>
+   Commentaire
+   <textarea rows="2" formControlName="commentaire"></textarea>
+  </label>
+ </form>
+</app-form-modal>

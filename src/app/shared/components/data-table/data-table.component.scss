@@ -1,0 +1,77 @@
+﻿.table-wrapper {
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #d9e3ee;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.03);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #e8eef5;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 0.95rem;
+  }
+
+  thead {
+    background: #f8fafc;
+  }
+
+  th {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.83rem;
+    color: #64748b;
+  }
+}
+
+.actions {
+  display: inline-flex;
+  gap: 0.28rem;
+
+  button {
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+  }
+
+  .danger:hover {
+    background: #ffe8ee;
+    color: #be123c;
+  }
+}
+
+.state-message {
+  padding: 1rem;
+  border-radius: 0.8rem;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.state-message--error {
+  color: #b91c1c;
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+

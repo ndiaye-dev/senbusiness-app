@@ -1,0 +1,33 @@
+﻿<div class="table-wrapper">
+ <div *ngIf="loading" class="state-message">Chargement...</div>
+ <div *ngIf="!loading && errorMessage" class="state-message state-message--error">{{ errorMessage }}</div>
+
+ <table *ngIf="!loading && !errorMessage && rows.length" class="table">
+  <thead>
+   <tr>
+    <th *ngFor="let column of columns">{{ column.label }}</th>
+    <th *ngIf="canView || canEdit || canDelete">Actions</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr *ngFor="let row of rows">
+    <td *ngFor="let column of columns">
+     <ng-container [ngSwitch]="column.type">
+      <span *ngSwitchCase="'currency'">{{ asCurrency(resolveCell(row, column)) | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</span>
+      <span *ngSwitchCase="'date'">{{ asDate(resolveCell(row, column)) | date: 'dd/MM/yyyy' : undefined : 'fr' }}</span>
+      <app-status-badge *ngSwitchCase="'status'" [status]="asText(resolveCell(row, column))" />
+      <span *ngSwitchDefault>{{ asText(resolveCell(row, column)) }}</span>
+     </ng-container>
+    </td>
+
+    <td class="actions" *ngIf="canView || canEdit || canDelete">
+     <button *ngIf="canView" type="button" (click)="view.emit(row)">Voir</button>
+     <button *ngIf="canEdit" type="button" (click)="edit.emit(row)">Modifier</button>
+     <button *ngIf="canDelete" type="button" class="danger" (click)="delete.emit(row)">Supprimer</button>
+    </td>
+   </tr>
+  </tbody>
+ </table>
+
+ <div *ngIf="!loading && !errorMessage && !rows.length" class="state-message">{{ emptyMessage }}</div>
+</div>

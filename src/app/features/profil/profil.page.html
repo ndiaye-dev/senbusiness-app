@@ -1,0 +1,72 @@
+﻿<section class="profil-page" *ngIf="currentUser() as user">
+ <header class="profil-header">
+  <div class="profil-header__left">
+   <div class="profil-header__icon">
+    <span class="material-symbols-outlined">person</span>
+   </div>
+   <div>
+    <h2>Mon profil</h2>
+    <p>Gérez vos informations personnelles et vos accès.</p>
+   </div>
+  </div>
+ </header>
+
+ <div class="profil-grid">
+  <article class="card">
+   <h3>Compte</h3>
+   <dl class="meta-list">
+    <div>
+     <dt>Rôle</dt>
+     <dd>{{ roleLabel() }}</dd>
+    </div>
+    <div>
+     <dt>Statut</dt>
+     <dd>{{ user.statut === 'actif' ? 'Actif' : 'Inactif' }}</dd>
+    </div>
+    <div>
+     <dt>Dernière connexion</dt>
+     <dd>{{ user.derniere_connexion ? (user.derniere_connexion | date: 'd MMM y, HH:mm' : '' : 'fr') : '-' }}</dd>
+    </div>
+   </dl>
+  </article>
+
+  <article class="card">
+   <h3>Informations</h3>
+
+   <p class="state-message state-message--error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+   <p class="state-message state-message--success" *ngIf="successMessage()">{{ successMessage() }}</p>
+
+   <form class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+    <label>
+     Nom complet <span class="required">*</span>
+     <input type="text" formControlName="nom_complet" />
+    </label>
+
+    <label>
+     Email <span class="required">*</span>
+     <input type="email" formControlName="email" />
+    </label>
+
+    <label>
+     Téléphone <span class="required">*</span>
+     <input type="text" formControlName="telephone" />
+    </label>
+
+    <label>
+     Nouveau mot de passe
+     <input type="password" formControlName="mot_de_passe" autocomplete="new-password" />
+    </label>
+
+    <label>
+     Confirmer le mot de passe
+     <input type="password" formControlName="confirmation_mot_de_passe" autocomplete="new-password" />
+    </label>
+
+    <div class="form-actions">
+     <button class="primary-btn" type="submit">Enregistrer</button>
+    </div>
+   </form>
+  </article>
+ </div>
+</section>
+

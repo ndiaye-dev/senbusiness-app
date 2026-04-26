@@ -1,0 +1,8 @@
+﻿<article class="kpi-card" [class.kpi-card--blue]="accent === 'blue'">
+ <h3>{{ title }}</h3>
+ <strong>
+  <ng-container *ngIf="isCurrency; else raw">{{ value | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</ng-container>
+  <ng-template #raw>{{ value }}</ng-template>
+ </strong>
+ <p *ngIf="subtitle">{{ subtitle }}</p>
+</article>

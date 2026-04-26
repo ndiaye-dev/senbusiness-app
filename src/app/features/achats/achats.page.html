@@ -1,0 +1,280 @@
+﻿<section class="achats-page">
+ <header class="achats-header">
+  <div class="achats-header__left">
+   <div class="achats-header__icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+   </div>
+   <div>
+    <h2>Achats</h2>
+    <p>{{ stats().total }} achats - Montant total : {{ stats().totalMontant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   </div>
+  </div>
+
+  <div class="achats-header__actions">
+   <button type="button" class="ghost-btn" (click)="exportAchats()" [disabled]="!filtered().length">
+    <span class="material-symbols-outlined">download</span>
+    Exporter
+   </button>
+
+   <button type="button" class="primary-btn" *ngIf="canCreate()" (click)="openCreateModal()">
+    <span class="material-symbols-outlined">add</span>
+    Nouvel achat
+   </button>
+  </div>
+ </header>
+
+ <p class="action-message" *ngIf="actionMessage()">{{ actionMessage() }}</p>
+
+ <section class="kpi-grid">
+  <article class="kpi-card kpi-card--teal">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">shopping_cart</span></div>
+   <div>
+    <h3>{{ stats().total }}</h3>
+    <p>Total achats</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--blue">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">inventory_2</span></div>
+   <div>
+    <h3>{{ stats().commandes }}</h3>
+    <p>Commandes</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--green">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">task_alt</span></div>
+   <div>
+    <h3>{{ stats().recus }}</h3>
+    <p>Reçus</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--emerald">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">payments</span></div>
+   <div>
+    <h3>{{ stats().payes }}</h3>
+    <p>Payés</p>
+   </div>
+  </article>
+
+  <article class="kpi-card kpi-card--red">
+   <div class="kpi-card__icon"><span class="material-symbols-outlined">cancel</span></div>
+   <div>
+    <h3>{{ stats().annules }}</h3>
+    <p>Annulés</p>
+   </div>
+  </article>
+ </section>
+
+ <section class="filters-card">
+  <div class="filters-row">
+   <label class="search-input">
+    <span class="material-symbols-outlined">search</span>
+    <input
+     type="search"
+     placeholder="Rechercher un achat ou fournisseur..."
+     [value]="search()"
+     (input)="onSearch($any($event.target).value)"
+    />
+   </label>
+
+   <select [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="tous">Tous les statuts</option>
+    <option value="commande">Commande</option>
+    <option value="recu">Reçu</option>
+    <option value="paye">Payé</option>
+    <option value="annule">Annulé</option>
+    <option value="brouillon">Brouillon</option>
+   </select>
+
+   <button type="button" class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtres
+   </button>
+
+   <p class="result-count">{{ filtered().length }} résultats</p>
+  </div>
+
+  <div class="advanced-filters" *ngIf="showFilters()">
+   <select [value]="supplierFilter()" (change)="onSupplierFilter($any($event.target).value)">
+    <option value="tous">Tous les fournisseurs</option>
+    <option *ngFor="let fournisseur of fournisseurs()" [value]="fournisseur.id">{{ fournisseur.raison_sociale }}</option>
+   </select>
+
+   <button type="button" class="reset-btn" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+ </section>
+
+ <section class="table-card">
+  <div *ngIf="loading()" class="state-message">Chargement des achats...</div>
+  <div *ngIf="!loading() && errorMessage()" class="state-message state-message--error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+   <div class="table-wrap" *ngIf="rows().length; else emptyState">
+    <table>
+     <thead>
+      <tr>
+       <th>Numéro</th>
+       <th>Fournisseur</th>
+       <th>Date</th>
+       <th>Réception prévue</th>
+       <th class="text-right">Montant</th>
+       <th>Statut</th>
+       <th class="text-center">Actions</th>
+      </tr>
+     </thead>
+
+     <tbody>
+      <tr *ngFor="let row of rows()">
+       <td>
+        <span class="numero-chip">{{ row.numero_achat }}</span>
+       </td>
+       <td class="supplier-name">{{ row.fournisseur_nom }}</td>
+       <td>{{ row.date_achat | date: 'd MMM y' : '' : 'fr' }}</td>
+       <td>{{ row.reception_prevue }}</td>
+       <td class="text-right montant">{{ row.montant | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+       <td>
+        <span [class]="'status-pill status-pill--' + statusTone(row.ui_status)">
+         <span class="dot"></span>
+         {{ statusLabel(row.ui_status) }}
+        </span>
+       </td>
+       <td class="text-center">
+        <div class="row-actions">
+         <button type="button" *ngIf="canView()" aria-label="Voir achat" (click)="viewById(row.id)">
+          <span class="material-symbols-outlined">visibility</span>
+         </button>
+
+         <button type="button" *ngIf="canEdit()" aria-label="Modifier achat" (click)="openEditModalById(row.id)">
+          <span class="material-symbols-outlined">edit</span>
+         </button>
+
+         <button type="button" class="danger" *ngIf="canDelete()" aria-label="Supprimer achat" (click)="removeById(row.id)">
+          <span class="material-symbols-outlined">delete</span>
+         </button>
+        </div>
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </div>
+
+   <ng-template #emptyState>
+    <div class="state-message">Aucun achat ne correspond aux filtres.</div>
+   </ng-template>
+
+   <footer class="table-footer" *ngIf="filtered().length">
+    <p>{{ startResult() }}-{{ endResult() }} sur {{ filtered().length }} résultats</p>
+
+    <div class="pager">
+     <button type="button" (click)="previousPage()" [disabled]="page() <= 1" aria-label="Page précédente">
+      <span class="material-symbols-outlined">chevron_left</span>
+     </button>
+
+     <button
+      type="button"
+      *ngFor="let pageIndex of pages()"
+      [class.active]="page() === pageIndex"
+      (click)="goToPage(pageIndex)"
+     >
+      {{ pageIndex }}
+     </button>
+
+     <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()" aria-label="Page suivante">
+      <span class="material-symbols-outlined">chevron_right</span>
+     </button>
+    </div>
+   </footer>
+  </ng-container>
+ </section>
+</section>
+
+<app-form-modal
+ [open]="isModalOpen()"
+ [title]="editingId() ? 'Modifier achat' : 'Nouvel achat'"
+ [submitLabel]="editingId() ? 'Mettre à jour' : 'Créer'"
+ (close)="closeModal()"
+ (submit)="save()"
+>
+ <form [formGroup]="form" class="form-grid two-columns" novalidate>
+  <label>
+   Fournisseur <span class="required">*</span>
+   <select formControlName="fournisseur_id">
+    <option *ngFor="let fournisseur of fournisseurs()" [value]="fournisseur.id">{{ fournisseur.raison_sociale }}</option>
+   </select>
+  </label>
+
+  <label>
+   Numéro achat <span class="required">*</span>
+   <input type="text" formControlName="numero_achat" />
+  </label>
+
+  <label>
+   Date achat <span class="required">*</span>
+   <input type="date" formControlName="date_achat" />
+  </label>
+
+  <label>
+   Statut <span class="required">*</span>
+   <select formControlName="statut">
+    <option value="brouillon">Brouillon</option>
+    <option value="commande">Commande</option>
+    <option value="reception_partielle">Payé</option>
+    <option value="recu">Reçu</option>
+    <option value="annule">Annulé</option>
+   </select>
+  </label>
+
+  <div class="lines full">
+   <div class="lines-header">
+    <h3>Lignes achat</h3>
+    <button type="button" (click)="addLine()">Ajouter ligne</button>
+   </div>
+
+   <div class="line-grid" *ngFor="let line of linesFormArray.controls; let i = index" [formGroup]="$any(line)">
+    <label>
+     Produit <span class="required">*</span>
+     <select formControlName="produit_id" (change)="onProductChange(i)">
+      <option *ngFor="let produit of produits()" [value]="produit.id">{{ produit.nom }}</option>
+     </select>
+    </label>
+
+    <label>
+     Quantité <span class="required">*</span>
+     <input type="number" formControlName="quantite" />
+    </label>
+
+    <label>
+     Prix achat <span class="required">*</span>
+     <input type="number" formControlName="prix_achat" />
+    </label>
+
+    <label>
+     TVA (%) <span class="required">*</span>
+     <input type="number" formControlName="tva_pourcentage" />
+    </label>
+
+    <button type="button" class="danger" (click)="removeLine(i)">Retirer</button>
+   </div>
+  </div>
+
+  <div class="totals full">
+   <p>Total HT: {{ totals().ht | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <p>Total TVA: {{ totals().tva | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</p>
+   <strong>Total TTC: {{ totals().ttc | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</strong>
+  </div>
+ </form>
+</app-form-modal>
+
+<app-form-modal
+ [open]="isDetailsModalOpen()"
+ [title]="detailsTitle()"
+ submitLabel="Fermer"
+ (close)="closeDetailsModal()"
+ (submit)="closeDetailsModal()"
+>
+ <ul class="details-list">
+  <li *ngFor="let line of detailsLines()">{{ line }}</li>
+ </ul>
+</app-form-modal>

@@ -1,0 +1,64 @@
+﻿<div class="login-shell">
+ <section class="login-panel">
+  <aside class="login-brand">
+   <div class="brand-chip">
+    <span>SB</span>
+   </div>
+
+   <div class="brand-content">
+    <h1>SenBusiness</h1>
+    <p>Gestion commerciale premium pour PME/TPE au Sénégal.</p>
+   </div>
+
+   <ul class="brand-list">
+    <li>
+     <span class="material-symbols-outlined">monitoring</span>
+     Tableau de bord commercial en temps réel
+    </li>
+    <li>
+     <span class="material-symbols-outlined">receipt_long</span>
+     Devis, factures, paiements et achats intégrés
+    </li>
+    <li>
+     <span class="material-symbols-outlined">inventory_2</span>
+     Suivi du stock avec alertes et mouvements
+    </li>
+   </ul>
+  </aside>
+
+  <article class="login-card">
+   <header class="login-card__header">
+    <h2>Connexion</h2>
+    <p>Accédez à votre espace de gestion SenBusiness.</p>
+   </header>
+
+   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label>
+     Email <span class="required">*</span>
+     <input type="email" formControlName="email" placeholder="admin@senbusiness.sn" />
+    </label>
+
+    <label>
+     Mot de passe <span class="required">*</span>
+     <input type="password" formControlName="mot_de_passe" placeholder="********" />
+    </label>
+
+    <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+    <button type="submit" class="primary-btn" [disabled]="loading()">{{ loading() ? 'Connexion...' : 'Se connecter' }}</button>
+   </form>
+
+   <section class="demo-accounts">
+    <h3>Comptes de démo</h3>
+    <ul>
+     <li><strong>Administrateur:</strong> admin@senbusiness.sn / admin123</li>
+     <li><strong>Gestionnaire:</strong> manager@senbusiness.sn / manager123</li>
+     <li><strong>Caissier:</strong> caissier@senbusiness.sn / caissier123</li>
+     <li><strong>Magasinier:</strong> magasin@senbusiness.sn / magasin123</li>
+    </ul>
+    <button type="button" class="ghost-btn" (click)="resetDemoData()">Réinitialiser les données de démo</button>
+   </section>
+  </article>
+ </section>
+</div>
+

@@ -1,0 +1,269 @@
+﻿<section class="hero-card">
+ <div class="hero-card__glow hero-card__glow--top"></div>
+ <div class="hero-card__glow hero-card__glow--bottom"></div>
+
+ <div class="hero-card__header">
+  <div>
+   <p class="hero-date">{{ heroDateLabel() }}</p>
+   <h1>Bonjour, {{ greetingName() }}</h1>
+   <p class="hero-subtitle">Voici un aperçu de votre activité commerciale.</p>
+  </div>
+
+  <div class="hero-actions">
+   <div class="range-tabs" role="tablist" aria-label="Periode">
+    <button type="button" [class.active]="isPeriodActive('semaine')" (click)="setPeriod('semaine')">Semaine</button>
+    <button type="button" [class.active]="isPeriodActive('mois')" (click)="setPeriod('mois')">Mois</button>
+    <button type="button" [class.active]="isPeriodActive('annee')" (click)="setPeriod('annee')">Année</button>
+   </div>
+   <a routerLink="/factures" class="cta-button">
+    <span class="material-symbols-outlined">add</span>
+    Nouvelle facture
+   </a>
+  </div>
+ </div>
+
+ <div class="hero-stats">
+  <article>
+   <span class="material-symbols-outlined">description</span>
+   <div>
+    <h3>{{ facturesMoisCount() }}</h3>
+    <p>Factures ce mois</p>
+   </div>
+  </article>
+  <article>
+   <span class="material-symbols-outlined">group</span>
+   <div>
+    <h3>{{ clientsActifs() }}</h3>
+    <p>Clients actifs</p>
+   </div>
+  </article>
+  <article>
+   <span class="material-symbols-outlined">percent</span>
+   <div>
+    <h3>{{ tauxRecouvrement() }}%</h3>
+    <p>Taux de recouvrement</p>
+   </div>
+  </article>
+  <article>
+   <span class="material-symbols-outlined">deployed_code</span>
+   <div>
+    <h3>{{ produitsDisponibles() }}</h3>
+    <p>Produits en stock</p>
+   </div>
+  </article>
+ </div>
+</section>
+
+<section class="kpi-grid">
+ <article class="kpi-card kpi-card--teal">
+  <div class="kpi-card__top">
+   <span class="icon material-symbols-outlined">payments</span>
+   <span class="trend trend--positive">+12.5%</span>
+  </div>
+  <h3>{{ dashboard().ca_total | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h3>
+  <p>Chiffre d'Affaires Total</p>
+ </article>
+
+ <article class="kpi-card kpi-card--blue">
+  <div class="kpi-card__top">
+   <span class="icon material-symbols-outlined">bar_chart</span>
+   <span class="trend trend--positive">+8.2%</span>
+  </div>
+  <h3>{{ dashboard().ventes_mois | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h3>
+  <p>Ventes du Mois</p>
+ </article>
+
+ <article class="kpi-card kpi-card--orange">
+  <div class="kpi-card__top">
+   <span class="icon material-symbols-outlined">receipt</span>
+   <span class="trend trend--negative">- {{ dashboard().factures_impayees }} factures</span>
+  </div>
+  <h3>{{ impayesMontant() | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h3>
+  <p>Factures impayées</p>
+ </article>
+
+ <article class="kpi-card kpi-card--red">
+  <div class="kpi-card__top">
+   <span class="icon material-symbols-outlined">inventory</span>
+   <span class="trend trend--negative">-5 depuis hier</span>
+  </div>
+  <h3>{{ lowStockCount() }} produits</h3>
+  <p>Stock faible</p>
+ </article>
+
+ <article class="kpi-card kpi-card--green">
+  <div class="kpi-card__top">
+   <span class="icon material-symbols-outlined">percent</span>
+   <span class="trend trend--positive">+5.8%</span>
+  </div>
+  <h3>{{ dashboard().marge_estimee | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h3>
+  <p>Marge estimée</p>
+ </article>
+</section>
+
+<section class="analytics-grid">
+ <article class="panel panel--chart">
+  <header class="panel__header">
+   <div>
+    <h2>Évolution du Chiffre d'Affaires</h2>
+    <p>{{ chartSubtitle() }}</p>
+   </div>
+   <div class="panel__header-actions">
+    <div class="panel__meta">
+     <span class="dot"></span>
+     CA mensuel
+    </div>
+    <button type="button" class="export-button" (click)="exportAnalytics()">
+     <span class="material-symbols-outlined">download</span>
+     Export
+    </button>
+   </div>
+  </header>
+
+  <div class="chart-wrap">
+   <ul class="y-axis">
+    <li *ngFor="let tick of chartData().scale">{{ formatScaleTick(tick) }}</li>
+   </ul>
+
+   <div class="bars">
+    <div class="bar-item" *ngFor="let point of chartData().points">
+     <div class="bar-holder">
+      <span class="bar-tooltip" *ngIf="point.showTooltip">{{ point.tooltip }}</span>
+      <div class="bar" [class.bar--accent]="point.isAccent" [class.bar--empty]="!point.hasValue" [style.height.%]="point.height"></div>
+     </div>
+     <p>{{ point.label }}</p>
+    </div>
+   </div>
+  </div>
+
+  <footer class="chart-footer">
+   <div>
+    <p>Total periode</p>
+    <h4>{{ periodTotal() | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h4>
+   </div>
+   <p class="growth" [class.growth--negative]="chartGrowth().comparable && chartGrowth().value < 0" [class.growth--neutral]="!chartGrowth().comparable">
+    <ng-container *ngIf="chartGrowth().comparable; else noBaselineGrowth">
+     {{ chartGrowth().value >= 0 ? '+' : '' }}{{ chartGrowth().value | number: '1.0-1' }}% vs période préc.
+    </ng-container>
+    <ng-template #noBaselineGrowth>Nouvelle activité (pas de période préc.)</ng-template>
+   </p>
+  </footer>
+ </article>
+
+ <article class="panel panel--products">
+  <header class="panel__header">
+   <div>
+    <h2>Top Produits</h2>
+    <p>Par volume de ventes</p>
+   </div>
+   <a routerLink="/produits">Voir tout</a>
+  </header>
+
+  <div class="top-list">
+   <div class="top-item" *ngFor="let product of topProduits(); let i = index">
+    <span class="rank">{{ i + 1 }}</span>
+    <div class="top-item__content">
+     <div class="top-item__line">
+      <h3>{{ product.nom }}</h3>
+      <strong>{{ product.quantite }}</strong>
+     </div>
+     <div class="progress">
+      <span [class]="'fill fill--' + product.tone" [style.width.%]="product.progress"></span>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <footer class="panel__footer">
+   <span>{{ topProductPeriodLabel() }}</span>
+   <a routerLink="/factures">Rapport complet</a>
+  </footer>
+ </article>
+</section>
+
+<section class="split-grid">
+ <article class="panel panel--alerts">
+  <header class="panel__header">
+   <div>
+    <h2>Alertes</h2>
+    <p>Actions requises</p>
+   </div>
+   <span class="pill-count">{{ alerts().length }} alertes</span>
+  </header>
+
+  <div class="alerts-list">
+   <button type="button" class="alert-item" *ngFor="let alert of alerts()" [class]="'alert-item alert-item--' + alert.tone" (click)="goTo(alert.route)">
+    <span class="material-symbols-outlined">{{ alert.icon }}</span>
+    <p>{{ alert.message }}</p>
+    <span class="material-symbols-outlined arrow">chevron_right</span>
+   </button>
+  </div>
+ </article>
+
+ <article class="panel panel--actions">
+  <header class="panel__header">
+   <div>
+    <h2>Actions rapides</h2>
+    <p>Accès direct aux fonctions clés</p>
+   </div>
+  </header>
+
+  <div class="quick-grid">
+   <a class="quick-item" *ngFor="let action of quickActions()" [routerLink]="action.route">
+    <span class="quick-item__icon" [class]="'quick-item__icon quick-item__icon--' + action.tone">
+     <span class="material-symbols-outlined">{{ action.icon }}</span>
+    </span>
+    <div>
+     <h3>{{ action.title }}</h3>
+     <p>{{ action.subtitle }}</p>
+    </div>
+   </a>
+  </div>
+ </article>
+</section>
+
+<section class="panel panel--table">
+ <header class="panel__header panel__header--table">
+  <div>
+   <h2>Factures récentes</h2>
+   <p>5 dernières factures émises</p>
+  </div>
+  <a routerLink="/factures">Voir toutes</a>
+ </header>
+
+ <div class="table-wrap">
+  <table>
+   <thead>
+    <tr>
+     <th>Numéro</th>
+     <th>Client</th>
+     <th>Date</th>
+     <th class="text-right">Montant</th>
+     <th>Statut</th>
+     <th class="text-right">Action</th>
+    </tr>
+   </thead>
+   <tbody>
+    <tr *ngFor="let facture of facturesRecentes()">
+     <td>
+      <span class="invoice-chip">{{ facture.numero_facture }}</span>
+     </td>
+     <td>{{ facture.clientNom }}</td>
+     <td>{{ facture.date_facture | date: 'd MMM y' : '' : 'fr' }}</td>
+     <td class="text-right amount">{{ facture.total_ttc | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</td>
+     <td>
+      <span [class]="'status-pill status-pill--' + statusTone(facture.statut)">
+       {{ formatStatus(facture.statut) }}
+      </span>
+     </td>
+     <td class="text-right">
+      <a [routerLink]="'/factures'" class="see-link">
+       <span class="material-symbols-outlined">visibility</span>
+      </a>
+     </td>
+    </tr>
+   </tbody>
+  </table>
+ </div>
+</section>
+
