@@ -1,7 +1,6 @@
-﻿{
+{
   "buildCommand": "npm run build",
   "outputDirectory": "dist/gestion-commerciale-frontend/browser",
-  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
