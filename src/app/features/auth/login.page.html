@@ -1,4 +1,4 @@
-﻿<div class="login-shell">
+<div class="login-shell">
  <section class="login-panel">
   <aside class="login-brand">
    <div class="brand-chip">
@@ -33,32 +33,68 @@
    </header>
 
    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <label>
-     Email <span class="required">*</span>
-     <input type="email" formControlName="email" placeholder="admin@senbusiness.sn" />
+    <label class="field">
+     <span>Email <span class="required">*</span></span>
+     <input
+      type="email"
+      formControlName="email"
+      placeholder="admin@senbusiness.sn"
+      autocomplete="email"
+      [class.field-invalid]="isControlInvalid('email')"
+     />
+     <small class="field-error" *ngIf="isControlInvalid('email')">{{ controlError('email') }}</small>
     </label>
 
-    <label>
-     Mot de passe <span class="required">*</span>
-     <input type="password" formControlName="mot_de_passe" placeholder="********" />
+    <label class="field">
+     <span>Mot de passe <span class="required">*</span></span>
+     <div class="password-wrap" [class.field-invalid]="isControlInvalid('mot_de_passe')">
+      <input
+       [type]="showPassword() ? 'text' : 'password'"
+       formControlName="mot_de_passe"
+       placeholder="********"
+       autocomplete="current-password"
+      />
+      <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+       {{ showPassword() ? 'Masquer' : 'Afficher' }}
+      </button>
+     </div>
+     <small class="field-error" *ngIf="isControlInvalid('mot_de_passe')">{{ controlError('mot_de_passe') }}</small>
     </label>
 
-    <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+    <p class="feedback" [class]="'feedback feedback--' + feedbackTone()" *ngIf="feedbackMessage()">
+     {{ feedbackMessage() }}
+    </p>
 
-    <button type="submit" class="primary-btn" [disabled]="loading()">{{ loading() ? 'Connexion...' : 'Se connecter' }}</button>
+    <button type="submit" class="primary-btn" [disabled]="loading()">
+     {{ loading() ? 'Connexion...' : 'Se connecter' }}
+    </button>
    </form>
 
    <section class="demo-accounts">
-    <h3>Comptes de démo</h3>
-    <ul>
-     <li><strong>Administrateur:</strong> admin@senbusiness.sn / admin123</li>
-     <li><strong>Gestionnaire:</strong> manager@senbusiness.sn / manager123</li>
-     <li><strong>Caissier:</strong> caissier@senbusiness.sn / caissier123</li>
-     <li><strong>Magasinier:</strong> magasin@senbusiness.sn / magasin123</li>
-    </ul>
-    <button type="button" class="ghost-btn" (click)="resetDemoData()">Réinitialiser les données de démo</button>
+    <div class="demo-accounts__head">
+     <h3>Comptes de démo</h3>
+     <button type="button" class="ghost-btn" (click)="resetDemoData()">Réinitialiser les données démo</button>
+    </div>
+
+    <div class="demo-grid">
+     <button type="button" class="demo-account-btn" (click)="fillDemoAccount('admin@senbusiness.sn', 'admin123')">
+      <strong>Administrateur</strong>
+      <span>admin@senbusiness.sn</span>
+     </button>
+     <button type="button" class="demo-account-btn" (click)="fillDemoAccount('manager@senbusiness.sn', 'manager123')">
+      <strong>Gestionnaire</strong>
+      <span>manager@senbusiness.sn</span>
+     </button>
+     <button type="button" class="demo-account-btn" (click)="fillDemoAccount('caissier@senbusiness.sn', 'caissier123')">
+      <strong>Caissier</strong>
+      <span>caissier@senbusiness.sn</span>
+     </button>
+     <button type="button" class="demo-account-btn" (click)="fillDemoAccount('magasin@senbusiness.sn', 'magasin123')">
+      <strong>Magasinier</strong>
+      <span>magasin@senbusiness.sn</span>
+     </button>
+    </div>
    </section>
   </article>
  </section>
 </div>
-
