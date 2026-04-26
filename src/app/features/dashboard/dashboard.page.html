@@ -141,12 +141,9 @@
     <p>Total periode</p>
     <h4>{{ periodTotal() | currency: 'XOF' : 'symbol-narrow' : '1.0-0' : 'fr' }}</h4>
    </div>
-   <p class="growth" [class.growth--negative]="chartGrowth().comparable && chartGrowth().value < 0" [class.growth--neutral]="!chartGrowth().comparable">
-    <ng-container *ngIf="chartGrowth().comparable; else noBaselineGrowth">
-     {{ chartGrowth().value >= 0 ? '+' : '' }}{{ chartGrowth().value | number: '1.0-1' }}% vs période préc.
-    </ng-container>
-    <ng-template #noBaselineGrowth>Nouvelle activité (pas de période préc.)</ng-template>
-   </p>
+   <div class="growth" [class.growth--negative]="chartGrowthIsNegative()" [class.growth--neutral]="chartGrowthIsNeutral()">
+    {{ chartGrowthLabel() }}
+   </div>
   </footer>
  </article>
 

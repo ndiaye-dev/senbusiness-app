@@ -189,6 +189,20 @@ export class DashboardPageComponent {
     return { value: this.round(((current - previous) / previous) * 100), comparable: true };
   });
 
+  readonly chartGrowthIsNegative = computed(() => this.chartGrowth().comparable && this.chartGrowth().value < 0);
+  readonly chartGrowthIsNeutral = computed(() => !this.chartGrowth().comparable);
+  readonly chartGrowthLabel = computed(() => {
+    const growth = this.chartGrowth();
+    if (!growth.comparable) {
+      return 'Nouvelle activité (pas de période préc.)';
+    }
+
+    return `${growth.value >= 0 ? '+' : ''}${growth.value.toLocaleString('fr-FR', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })}% vs période préc.`;
+  });
+
   readonly topProductPeriodLabel = computed(() => {
     const period = this.selectedPeriod();
     if (period === 'semaine') {
